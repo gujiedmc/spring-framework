@@ -32,6 +32,8 @@ import org.springframework.lang.Nullable;
  * Typically (but not necessarily), such a context will be driven by
  * a set of config locations to load bean definitions from.
  *
+ * 支持多次refresh()的ApplicationContext实现，每次创建一个新的BeanFactory。
+ *
  * <p>The only method to be implemented by subclasses is {@link #loadBeanDefinitions},
  * which gets invoked on each refresh. A concrete implementation is supposed to load
  * bean definitions into the given
@@ -116,12 +118,12 @@ public abstract class AbstractRefreshableApplicationContext extends AbstractAppl
 
 
 	/**
-	 * This implementation performs an actual refresh of this context's underlying
-	 * bean factory, shutting down the previous bean factory (if any) and
-	 * initializing a fresh bean factory for the next phase of the context's lifecycle.
+	 * 对当前上下文中的BeanFactory执行刷新。关闭旧的可能存在的BeanFactory并。
+	 * 初始化一个新的BeanFactory供context在下一阶段使用。
 	 */
 	@Override
 	protected final void refreshBeanFactory() throws BeansException {
+		// 如果之前有BeanFactory，销毁然后重建
 		if (hasBeanFactory()) {
 			destroyBeans();
 			closeBeanFactory();
@@ -231,6 +233,7 @@ public abstract class AbstractRefreshableApplicationContext extends AbstractAppl
 	}
 
 	/**
+	 * 将Bean定义加载到指定的BeanFactory中。通常委派给一个或多个Bean定义读取类。
 	 * Load bean definitions into the given bean factory, typically through
 	 * delegating to one or more bean definition readers.
 	 * @param beanFactory the bean factory to load bean definitions into

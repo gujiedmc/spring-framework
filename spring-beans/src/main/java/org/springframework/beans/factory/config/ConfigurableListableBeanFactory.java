@@ -56,6 +56,10 @@ public interface ConfigurableListableBeanFactory
 	 * BeanFactoryAware or ApplicationContext through ApplicationContextAware.
 	 * <p>By default, only the BeanFactoryAware interface is ignored.
 	 * For further types to ignore, invoke this method for each type.
+	 *
+	 * 忽略指定接口的自动注入，这个方法通常被ApplicationContext注册那些会用其他方式处理依赖。
+	 * 例如BeanFactory通过BeanFactoryAware，ApplicationContext通过ApplicationContextAware。
+	 * 默认情况，只有BeanFactoryAware被忽略了。
 	 * @param ifc the dependency interface to ignore
 	 * @see org.springframework.beans.factory.BeanFactoryAware
 	 * @see org.springframework.context.ApplicationContextAware

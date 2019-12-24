@@ -252,13 +252,11 @@ public class GenericApplicationContext extends AbstractApplicationContext implem
 
 
 	//---------------------------------------------------------------------
-	// Implementations of AbstractApplicationContext's template methods
+	// AbstractApplicationContext 模板方法实现
 	//---------------------------------------------------------------------
 
 	/**
-	 * Do nothing: We hold a single internal BeanFactory and rely on callers
-	 * to register beans through our public methods (or the BeanFactory's).
-	 * @see #registerBeanDefinition
+	 * 什么也不做，因为已经有了一个BeanFactory，调用者可以通过公共方法进行创建Bean
 	 */
 	@Override
 	protected final void refreshBeanFactory() throws IllegalStateException {

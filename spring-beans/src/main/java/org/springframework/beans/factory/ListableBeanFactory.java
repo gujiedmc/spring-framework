@@ -30,10 +30,16 @@ import org.springframework.lang.Nullable;
  * preload all their bean definitions (such as XML-based factories) may implement
  * this interface.
  *
+ * {@link BeanFactory}接口的拓展，可以列举工厂的所有Bean实例，客户端可以不通过name一个一个的查找Bean。
+ * 预加载所有Bean定义的实现（例如基于xml的BeanFactory）可以实现这个接口
+ *
  * <p>If this is a {@link HierarchicalBeanFactory}, the return values will <i>not</i>
  * take any BeanFactory hierarchy into account, but will relate only to the beans
  * defined in the current factory. Use the {@link BeanFactoryUtils} helper class
  * to consider beans in ancestor factories too.
+ *
+ * 如果当前实现同时是一个可继承的BeanFactory（HierarchicalBeanFactory），那么返回的数据并不承担返回父类
+ * 的Beans，而只返回当前BeanFactory的数据。如果要同时返回父类工厂的数据，可以使用{@link BeanFactoryUtils}实现。
  *
  * <p>The methods in this interface will just respect bean definitions of this factory.
  * They will ignore any singleton beans that have been registered by other means like
@@ -45,9 +51,18 @@ import org.springframework.lang.Nullable;
  * scenarios, all beans will be defined by external bean definitions anyway, so most
  * applications don't need to worry about this differentiation.
  *
+ * 这个BeanFactory接口中的方法只关注当前工厂的Bean定义，它们会忽略任何其他有段注册的单例Bean，
+ * 例如{@link ConfigurableBeanFactory#registerSingleton},
+ * 除了{@code getBeanNamesOfType},{@code getBeansOfType}会检测那些手动注册的单例Bean。
+ * BeanFactory的方法getBean同样不能直接访问这样的特殊Bean，
+ * 但是，在典型的场景中，通常所有bean都将由外部bean定义来定义，因此大多数应用程序不需要担心这种区别。
+ *
  * <p><b>NOTE:</b> With the exception of {@code getBeanDefinitionCount}
  * and {@code containsBeanDefinition}, the methods in this interface
  * are not designed for frequent invocation. Implementations may be slow.
+ *
+ * 需要注意，除了getBeanDefinitionCount和containsBeanDefinition方法外，
+ * 其他方法都不是为频繁访问设计的，实现可能很慢。
  *
  * @author Rod Johnson
  * @author Juergen Hoeller
@@ -62,6 +77,9 @@ public interface ListableBeanFactory extends BeanFactory {
 	 * <p>Does not consider any hierarchy this factory may participate in,
 	 * and ignores any singleton beans that have been registered by
 	 * other means than bean definitions.
+	 *
+	 * 查看当前BeanFactory是否包含指定BeanName的bean定义。不考虑父工厂和通过其他方式注册的Bean。
+	 *
 	 * @param beanName the name of the bean to look for
 	 * @return if this bean factory contains a bean definition with the given name
 	 * @see #containsBean
@@ -73,6 +91,8 @@ public interface ListableBeanFactory extends BeanFactory {
 	 * <p>Does not consider any hierarchy this factory may participate in,
 	 * and ignores any singleton beans that have been registered by
 	 * other means than bean definitions.
+	 *
+	 * 返回当前工厂定义的Bean数量，不考虑父工厂和通过其他方式注册的Bean
 	 * @return the number of beans defined in the factory
 	 */
 	int getBeanDefinitionCount();
@@ -82,6 +102,9 @@ public interface ListableBeanFactory extends BeanFactory {
 	 * <p>Does not consider any hierarchy this factory may participate in,
 	 * and ignores any singleton beans that have been registered by
 	 * other means than bean definitions.
+	 *
+	 * 返回当前工厂定义的所有Bean的name，不考虑父工厂和通过其他方式注册的Bean
+	 *
 	 * @return the names of all beans defined in this factory,
 	 * or an empty array if none defined
 	 */
@@ -181,6 +204,8 @@ public interface ListableBeanFactory extends BeanFactory {
 	 * Return the names of beans matching the given type (including subclasses),
 	 * judging from either bean definitions or the value of {@code getObjectType}
 	 * in the case of FactoryBeans.
+	 *
+	 * 返回指定类型（包含其子类）的所有bean的名称。
 	 * <p><b>NOTE: This method introspects top-level beans only.</b> It does <i>not</i>
 	 * check nested beans which might match the specified type as well.
 	 * <p>Does consider objects created by FactoryBeans if the "allowEagerInit" flag is set,

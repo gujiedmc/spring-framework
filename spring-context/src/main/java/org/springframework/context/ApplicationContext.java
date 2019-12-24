@@ -24,33 +24,16 @@ import org.springframework.core.io.support.ResourcePatternResolver;
 import org.springframework.lang.Nullable;
 
 /**
- * Central interface to provide configuration for an application.
- * This is read-only while the application is running, but may be
- * reloaded if the implementation supports this.
+ * 应用程序配置的核心接口。在运行过程中是只读的，但是可以在实现支持的情况下重新加载。
  *
- * <p>An ApplicationContext provides:
- * <ul>
- * <li>Bean factory methods for accessing application components.
- * Inherited from {@link org.springframework.beans.factory.ListableBeanFactory}.
- * <li>The ability to load file resources in a generic fashion.
- * Inherited from the {@link org.springframework.core.io.ResourceLoader} interface.
- * <li>The ability to publish events to registered listeners.
- * Inherited from the {@link ApplicationEventPublisher} interface.
- * <li>The ability to resolve messages, supporting internationalization.
- * Inherited from the {@link MessageSource} interface.
- * <li>Inheritance from a parent context. Definitions in a descendant context
- * will always take priority. This means, for example, that a single parent
- * context can be used by an entire web application, while each servlet has
- * its own child context that is independent of that of any other servlet.
- * </ul>
+ * 一个ApplicationContext除了标准的BeanFactory功能外还提供了以下功能：
+ * 1. 通过继承{@link ListableBeanFactory}/{@link HierarchicalBeanFactory}提供了BeanFactory的方法来访问程序组件。
+ * 2. 通过继承{@link ResourceLoader}提供了通用的加载配置文件的方法。
+ * 3. 通过继承{@link ApplicationEventPublisher}提供了发布事件给监听者的功能。
+ * 4. 通过继承{@link MessageSource}提供了消息和国际化处理的功能。
+ * 5. 可以继承另外一个ApplicationContext，但是子context中的BeanDefinitions优先于父级，
+ *    这意味一个父context可以被整个web context继承，并且每一个Servlet拥有自己独立的Context
  *
- * <p>In addition to standard {@link org.springframework.beans.factory.BeanFactory}
- * lifecycle capabilities, ApplicationContext implementations detect and invoke
- * {@link ApplicationContextAware} beans as well as {@link ResourceLoaderAware},
- * {@link ApplicationEventPublisherAware} and {@link MessageSourceAware} beans.
- *
- * @author Rod Johnson
- * @author Juergen Hoeller
  * @see ConfigurableApplicationContext
  * @see org.springframework.beans.factory.BeanFactory
  * @see org.springframework.core.io.ResourceLoader
@@ -59,8 +42,7 @@ public interface ApplicationContext extends EnvironmentCapable, ListableBeanFact
 		MessageSource, ApplicationEventPublisher, ResourcePatternResolver {
 
 	/**
-	 * Return the unique id of this application context.
-	 * @return the unique id of the context, or {@code null} if none
+	 * 唯一id
 	 */
 	@Nullable
 	String getId();
@@ -79,6 +61,7 @@ public interface ApplicationContext extends EnvironmentCapable, ListableBeanFact
 
 	/**
 	 * Return the timestamp when this context was first loaded.
+	 * 首次加载成功时间
 	 * @return the timestamp (ms) when this context was first loaded
 	 */
 	long getStartupDate();
@@ -86,13 +69,15 @@ public interface ApplicationContext extends EnvironmentCapable, ListableBeanFact
 	/**
 	 * Return the parent context, or {@code null} if there is no parent
 	 * and this is the root of the context hierarchy.
+	 *
+	 * 返回父级Context
 	 * @return the parent context, or {@code null} if there is no parent
 	 */
 	@Nullable
 	ApplicationContext getParent();
 
 	/**
-	 * Expose AutowireCapableBeanFactory functionality for this context.
+	 *
 	 * <p>This is not typically used by application code, except for the purpose of
 	 * initializing bean instances that live outside of the application context,
 	 * applying the Spring bean lifecycle (fully or partly) to them.
