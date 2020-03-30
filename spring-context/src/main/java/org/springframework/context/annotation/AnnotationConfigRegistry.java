@@ -17,6 +17,7 @@
 package org.springframework.context.annotation;
 
 /**
+ * 注解驱动配置接口
  * Common interface for annotation config application contexts,
  * defining {@link #register} and {@link #scan} methods.
  *

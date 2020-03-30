@@ -32,6 +32,9 @@ import org.springframework.beans.factory.FactoryBeanNotInitializedException;
 import org.springframework.lang.Nullable;
 
 /**
+ * 在单例注册中心（DefaultSingletonBeanRegistry）的基础上提供了FactoryBean实例的处理
+ * AbstractBeanFactory的基类
+ *
  * Support base class for singleton registries which need to handle
  * {@link org.springframework.beans.factory.FactoryBean} instances,
  * integrated with {@link DefaultSingletonBeanRegistry}'s singleton management.
@@ -43,6 +46,7 @@ import org.springframework.lang.Nullable;
  */
 public abstract class FactoryBeanRegistrySupport extends DefaultSingletonBeanRegistry {
 
+	// 缓存FactoryBean name对应的其创建的对象
 	/** Cache of singleton objects created by FactoryBeans: FactoryBean name to object. */
 	private final Map<String, Object> factoryBeanObjectCache = new ConcurrentHashMap<>(16);
 
@@ -73,6 +77,8 @@ public abstract class FactoryBeanRegistrySupport extends DefaultSingletonBeanReg
 	}
 
 	/**
+	 * 根据FactoryBean的name从缓存中获取对象
+	 *
 	 * Obtain an object to expose from the given FactoryBean, if available
 	 * in cached form. Quick check for minimal synchronization.
 	 * @param beanName the name of the bean

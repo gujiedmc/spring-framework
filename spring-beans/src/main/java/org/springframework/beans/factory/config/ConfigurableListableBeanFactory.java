@@ -28,6 +28,10 @@ import org.springframework.lang.Nullable;
  * In addition to {@link ConfigurableBeanFactory}, it provides facilities to
  * analyze and modify bean definitions, and to pre-instantiate singletons.
  *
+ * 被大部分可列举的BeanFactory实现的配置接口，提供了解析和修改Bean定义以及实例化单例Bean的功能。
+ *
+ * 这个类通常情况不会使用，通常使用BeanFactory和ListableBeanFactory，这个类一般只是框架内部使用。
+ *
  * <p>This subinterface of {@link org.springframework.beans.factory.BeanFactory}
  * is not meant to be used in normal application code: Stick to
  * {@link org.springframework.beans.factory.BeanFactory} or
@@ -43,6 +47,8 @@ public interface ConfigurableListableBeanFactory
 		extends ListableBeanFactory, AutowireCapableBeanFactory, ConfigurableBeanFactory {
 
 	/**
+	 * 忽略指定依赖的自动装配。默认为空
+	 *
 	 * Ignore the given dependency type for autowiring:
 	 * for example, String. Default is none.
 	 * @param type the dependency type to ignore
@@ -97,6 +103,8 @@ public interface ConfigurableListableBeanFactory
 			throws NoSuchBeanDefinitionException;
 
 	/**
+	 * 获取指定名称的Bean定义
+	 *
 	 * Return the registered BeanDefinition for the specified bean, allowing access
 	 * to its property values and constructor argument value (which can be
 	 * modified during bean factory post-processing).
@@ -113,6 +121,8 @@ public interface ConfigurableListableBeanFactory
 	BeanDefinition getBeanDefinition(String beanName) throws NoSuchBeanDefinitionException;
 
 	/**
+	 * 返回当前BeanFactory管理的所有Bean的name的迭代器
+	 *
 	 * Return a unified view over all bean names managed by this factory.
 	 * <p>Includes bean definition names as well as names of manually registered
 	 * singleton instances, with bean definition names consistently coming first,
@@ -127,6 +137,8 @@ public interface ConfigurableListableBeanFactory
 	Iterator<String> getBeanNamesIterator();
 
 	/**
+	 * 清除元数据缓存。
+	 *
 	 * Clear the merged bean definition cache, removing entries for beans
 	 * which are not considered eligible for full metadata caching yet.
 	 * <p>Typically triggered after changes to the original bean definitions,
@@ -139,6 +151,8 @@ public interface ConfigurableListableBeanFactory
 	void clearMetadataCache();
 
 	/**
+	 * 冻结bean定义。通知已注册的bean定义不再被修改和后置处理器处理。
+	 *
 	 * Freeze all bean definitions, signalling that the registered bean definitions
 	 * will not be modified or post-processed any further.
 	 * <p>This allows the factory to aggressively cache bean definition metadata.
@@ -146,6 +160,8 @@ public interface ConfigurableListableBeanFactory
 	void freezeConfiguration();
 
 	/**
+	 * 返回是否冻结
+	 *
 	 * Return whether this factory's bean definitions are frozen,
 	 * i.e. are not supposed to be modified or post-processed any further.
 	 * @return {@code true} if the factory's configuration is considered frozen
@@ -153,6 +169,8 @@ public interface ConfigurableListableBeanFactory
 	boolean isConfigurationFrozen();
 
 	/**
+	 * 确保所有的费延迟加载的单例bean初始化，通常在BeanFactory加载完成之后调用。
+	 *
 	 * Ensure that all non-lazy-init singletons are instantiated, also considering
 	 * {@link org.springframework.beans.factory.FactoryBean FactoryBeans}.
 	 * Typically invoked at the end of factory setup, if desired.

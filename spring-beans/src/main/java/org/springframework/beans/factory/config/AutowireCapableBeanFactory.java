@@ -26,6 +26,12 @@ import org.springframework.beans.factory.NoUniqueBeanDefinitionException;
 import org.springframework.lang.Nullable;
 
 /**
+ * BeanFactory接口的实现，可以实现自动装配。
+ *
+ * 其它框架的集成代码可以利用这个注入和装配不受Spring控制的Bean。
+ *
+ *
+ *
  * Extension of the {@link org.springframework.beans.factory.BeanFactory}
  * interface to be implemented by bean factories that are capable of
  * autowiring, provided that they want to expose this functionality for
@@ -125,6 +131,12 @@ public interface AutowireCapableBeanFactory extends BeanFactory {
 	//-------------------------------------------------------------------------
 
 	/**
+	 * 完全新建一个指定类的新的Bean实例。
+	 * 执行完整的bean初始化流程，包括Bean后置处理器等。
+	 *
+	 * 这个方法是故意设计用来创建一个可刷新的实例，装配注解字段和方法，并且同样执行标准bean初始化的回调方法。
+	 * 它并不实现传统的根据name和根据type注入属性，可以通过#createBean(Class, int, boolean)满足该需求。
+	 *
 	 * Fully create a new bean instance of the given class.
 	 * <p>Performs full initialization of the bean, including all applicable
 	 * {@link BeanPostProcessor BeanPostProcessors}.
@@ -139,6 +151,11 @@ public interface AutowireCapableBeanFactory extends BeanFactory {
 	<T> T createBean(Class<T> beanClass) throws BeansException;
 
 	/**
+	 *
+	 * 通过调用初始化后置回调方法和bean属性后置处理装配注入给定的bean。
+	 * 注意这个方法本质上是为装配注解字段和方法设计的，并不是为新实例或反序列化实例。
+	 * 它并不实现传统的根据name和根据type注入属性，可以通过{@link #autowireBeanProperties}满足该需求
+	 *
 	 * Populate the given bean instance through applying after-instantiation callbacks
 	 * and bean property post-processing (e.g. for annotation-driven injection).
 	 * <p>Note: This is essentially intended for (re-)populating annotated fields and
@@ -151,6 +168,11 @@ public interface AutowireCapableBeanFactory extends BeanFactory {
 	void autowireBean(Object existingBean) throws BeansException;
 
 	/**
+	 * 配置给定的未处理bean：自动注入bean属性，调用Factory回调类型{@code setBeanName}和{@code setBeanFactory}
+	 * 并且调用全部的后置处理器
+	 *
+	 * 这个方法实际上是initializeBean方法的超集。
+	 *
 	 * Configure the given raw bean: autowiring bean properties, applying
 	 * bean property values, applying factory callbacks such as {@code setBeanName}
 	 * and {@code setBeanFactory}, and also applying all bean post processors
@@ -172,9 +194,15 @@ public interface AutowireCapableBeanFactory extends BeanFactory {
 
 	//-------------------------------------------------------------------------
 	// Specialized methods for fine-grained control over the bean lifecycle
+	// 专门的方法可以对bean的生命周期进行细粒度的控制
 	//-------------------------------------------------------------------------
 
 	/**
+	 *
+	 * 根据指定的自动装配策略完全新建一个指定类的新的Bean实例，这里支持此接口中定义的所有常量。
+	 * 执行完整的bean初始化流程，包括Bean后置处理器等。这个方法事实上是{@link #autowire}的超集，
+	 * 添加了{@link #initializeBean}行为。
+	 *
 	 * Fully create a new bean instance of the given class with the specified
 	 * autowire strategy. All constants defined in this interface are supported here.
 	 * <p>Performs full initialization of the bean, including all applicable
@@ -194,6 +222,9 @@ public interface AutowireCapableBeanFactory extends BeanFactory {
 	Object createBean(Class<?> beanClass, int autowireMode, boolean dependencyCheck) throws BeansException;
 
 	/**
+	 * 根据指定的自动装配策略完全新建一个指定类的新的Bean实例，这里支持此接口中定义的所有常量。
+	 * 并不会执行标椎的Bean后置处理器回调或执行更复杂的bean初始化流程。
+	 *
 	 * Instantiate a new bean instance of the given class with the specified autowire
 	 * strategy. All constants defined in this interface are supported here.
 	 * Can also be invoked with {@code AUTOWIRE_NO} in order to just apply
@@ -222,6 +253,11 @@ public interface AutowireCapableBeanFactory extends BeanFactory {
 	Object autowire(Class<?> beanClass, int autowireMode, boolean dependencyCheck) throws BeansException;
 
 	/**
+	 * 根据type或name装配给定的bean的属性。
+	 * 不执行标准的BeanPostProcessor。
+	 * 为此目的提供了不同的细粒度操作，例如{@link #initializeBean}，
+	 * 然而{@link InstantiationAwareBeanPostProcessor}回调
+	 *
 	 * Autowire the bean properties of the given bean instance by name or type.
 	 * Can also be invoked with {@code AUTOWIRE_NO} in order to just apply
 	 * after-instantiation callbacks (e.g. for annotation-driven injection).
@@ -243,6 +279,11 @@ public interface AutowireCapableBeanFactory extends BeanFactory {
 			throws BeansException;
 
 	/**
+	 * 将具有给定名称的bean定义的属性值应用于给定的bean实例。
+	 * Bean定义既可以定义完整的自包含Bean，重用其属性值，也可以仅定义要用于现有Bean实例的属性值。
+	 *
+	 * 注意：这个方法不会自动装配bean属性值。
+	 *
 	 * Apply the property values of the bean definition with the given name to
 	 * the given bean instance. The bean definition can either define a fully
 	 * self-contained bean, reusing its property values, or just property values
@@ -267,6 +308,9 @@ public interface AutowireCapableBeanFactory extends BeanFactory {
 	void applyBeanPropertyValues(Object existingBean, String beanName) throws BeansException;
 
 	/**
+	 * 初始化给定的未配置的bean，申请Factory的回调方法，类似{@code setBeanName} 和 {@code setBeanFactory},
+	 * 并且申请调用所有的后置处理器。
+	 *
 	 * Initialize the given raw bean, applying factory callbacks
 	 * such as {@code setBeanName} and {@code setBeanFactory},
 	 * also applying all bean post processors (including ones which
@@ -286,6 +330,8 @@ public interface AutowireCapableBeanFactory extends BeanFactory {
 	Object initializeBean(Object existingBean, String beanName) throws BeansException;
 
 	/**
+	 * 初始化之前调用Bean前置处理器
+	 *
 	 * Apply {@link BeanPostProcessor BeanPostProcessors} to the given existing bean
 	 * instance, invoking their {@code postProcessBeforeInitialization} methods.
 	 * The returned bean instance may be a wrapper around the original.
@@ -303,6 +349,8 @@ public interface AutowireCapableBeanFactory extends BeanFactory {
 			throws BeansException;
 
 	/**
+	 * 初始化之后调用Bean后置处理器
+	 *
 	 * Apply {@link BeanPostProcessor BeanPostProcessors} to the given existing bean
 	 * instance, invoking their {@code postProcessAfterInitialization} methods.
 	 * The returned bean instance may be a wrapper around the original.
@@ -320,6 +368,8 @@ public interface AutowireCapableBeanFactory extends BeanFactory {
 			throws BeansException;
 
 	/**
+	 * 摧毁bean
+	 *
 	 * Destroy the given bean instance (typically coming from {@link #createBean}),
 	 * applying the {@link org.springframework.beans.factory.DisposableBean} contract as well as
 	 * registered {@link DestructionAwareBeanPostProcessor DestructionAwareBeanPostProcessors}.
@@ -332,9 +382,13 @@ public interface AutowireCapableBeanFactory extends BeanFactory {
 
 	//-------------------------------------------------------------------------
 	// Delegate methods for resolving injection points
+	// 解决注入点的委托方法
 	//-------------------------------------------------------------------------
 
 	/**
+	 * 解决唯一匹配给定对象的类型，如果有的话，包括它的bean名字的bean实例。
+	 * 这实际上是一个变体getBean(Class) ，其保留了匹配实例的bean的名称。
+	 *
 	 * Resolve the bean instance that uniquely matches the given object type, if any,
 	 * including its bean name.
 	 * <p>This is effectively a variant of {@link #getBean(Class)} which preserves the
@@ -350,6 +404,8 @@ public interface AutowireCapableBeanFactory extends BeanFactory {
 	<T> NamedBeanHolder<T> resolveNamedBean(Class<T> requiredType) throws BeansException;
 
 	/**
+	 *
+	 *
 	 * Resolve a bean instance for the given bean name, providing a dependency descriptor
 	 * for exposure to target factory methods.
 	 * <p>This is effectively a variant of {@link #getBean(String, Class)} which supports
