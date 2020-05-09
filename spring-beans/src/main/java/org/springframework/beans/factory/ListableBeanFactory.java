@@ -30,7 +30,7 @@ import org.springframework.lang.Nullable;
  * preload all their bean definitions (such as XML-based factories) may implement
  * this interface.
  *
- * {@link BeanFactory}接口的拓展，可以列举工厂的所有Bean实例，客户端可以不通过name一个一个的查找Bean。
+ * {@link BeanFactory}接口的拓展，可以遍历工厂的所有Bean实例，客户端可以不通过name一个一个的查找Bean。
  * 预加载所有Bean定义的实现（例如基于xml的BeanFactory）可以实现这个接口
  *
  * <p>If this is a {@link HierarchicalBeanFactory}, the return values will <i>not</i>
@@ -51,7 +51,7 @@ import org.springframework.lang.Nullable;
  * scenarios, all beans will be defined by external bean definitions anyway, so most
  * applications don't need to worry about this differentiation.
  *
- * 这个BeanFactory接口中的方法只关注当前工厂的Bean定义，它们会忽略任何其他有段注册的单例Bean，
+ * 这个BeanFactory接口中的方法只关注当前工厂的Bean定义，它们会忽略其他方式注册的单例Bean，
  * 例如{@link ConfigurableBeanFactory#registerSingleton},
  * 除了{@code getBeanNamesOfType},{@code getBeansOfType}会检测那些手动注册的单例Bean。
  * BeanFactory的方法getBean同样不能直接访问这样的特殊Bean，

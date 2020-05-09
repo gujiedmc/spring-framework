@@ -169,7 +169,7 @@ public interface ConfigurableListableBeanFactory
 	boolean isConfigurationFrozen();
 
 	/**
-	 * 确保所有的费延迟加载的单例bean初始化，通常在BeanFactory加载完成之后调用。
+	 * 确保所有的非延迟加载的单例bean初始化，通常在BeanFactory加载完成之后调用。
 	 *
 	 * Ensure that all non-lazy-init singletons are instantiated, also considering
 	 * {@link org.springframework.beans.factory.FactoryBean FactoryBeans}.
