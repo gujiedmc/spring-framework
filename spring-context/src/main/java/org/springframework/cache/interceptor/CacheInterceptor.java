@@ -25,6 +25,9 @@ import org.aopalliance.intercept.MethodInvocation;
 import org.springframework.lang.Nullable;
 
 /**
+ * Spring 缓存的AOP拦截器。
+ * 具体的业务逻辑继承自{@link CacheAspectSupport}，该类只是用来装配aop拦截的方法执行
+ *
  * AOP Alliance MethodInterceptor for declarative cache
  * management using the common Spring caching infrastructure
  * ({@link org.springframework.cache.Cache}).

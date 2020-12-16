@@ -21,6 +21,10 @@ import org.springframework.lang.Nullable;
 import org.springframework.util.function.SingletonSupplier;
 
 /**
+ * 缓存操作的基类。
+ * 定义了缓存操作基础的4个方法：{@link #doGet},{@link #doPut},{@link #doEvict},{@link #doClear}，
+ * 以及可以装配的异常处理器
+ *
  * A base component for invoking {@link Cache} operations and using a
  * configurable {@link CacheErrorHandler} when an exception occurs.
  *
