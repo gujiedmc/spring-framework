@@ -373,6 +373,13 @@ public class JpaTransactionManager extends AbstractPlatformTransactionManager
 		return ((JpaTransactionObject) transaction).hasTransaction();
 	}
 
+	/**
+	 * 开启事务
+	 *
+	 * @param transaction transaction object returned by {@code doGetTransaction}
+	 * @param definition a TransactionDefinition instance, describing propagation
+	 * behavior, isolation level, read-only flag, timeout, and transaction name
+	 */
 	@Override
 	protected void doBegin(Object transaction, TransactionDefinition definition) {
 		JpaTransactionObject txObject = (JpaTransactionObject) transaction;
@@ -399,6 +406,7 @@ public class JpaTransactionManager extends AbstractPlatformTransactionManager
 
 			// Delegate to JpaDialect for actual transaction begin.
 			final int timeoutToUse = determineTimeout(definition);
+			// 调用底层hibernate开启事务，hibernate通过jdbc#setAutoCommit(false)开启事务
 			Object transactionData = getJpaDialect().beginTransaction(em,
 					new JpaTransactionDefinition(definition, timeoutToUse, txObject.isNewEntityManagerHolder()));
 			txObject.setTransactionData(transactionData);
