@@ -20,6 +20,8 @@ import org.springframework.cache.Cache;
 import org.springframework.lang.Nullable;
 
 /**
+ * 缓存异常处理器。
+ *
  * A strategy for handling cache-related errors. In most cases, any
  * exception thrown by the provider should simply be thrown back at
  * the client but, in some circumstances, the infrastructure may need

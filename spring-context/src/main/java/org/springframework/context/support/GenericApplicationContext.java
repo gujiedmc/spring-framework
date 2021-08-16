@@ -47,6 +47,9 @@ import org.springframework.util.Assert;
  * the {@link org.springframework.beans.factory.support.BeanDefinitionRegistry}
  * interface in order to allow for applying any bean definition readers to it.
  *
+ * 通用ApplicationContext实现，内部持有一个DefaultListableBeanFactory实例，
+ * 并且并不指定Bean定义的具体类型。可通过实现BeanDefinitionRegistry来进行各种bean定义读取器来读取。
+ *
  * <p>Typical usage is to register a variety of bean definitions via the
  * {@link org.springframework.beans.factory.support.BeanDefinitionRegistry}
  * interface and then call {@link #refresh()} to initialize those beans
@@ -59,6 +62,13 @@ import org.springframework.util.Assert;
  * internal BeanFactory instance for each refresh, the internal BeanFactory of
  * this context is available right from the start, to be able to register bean
  * definitions on it. {@link #refresh()} may only be called once.
+ *
+ * 通常使用方式：通过BeanDefinitionRegistry实现注册多种BeanDefinition，
+ * 然后调用{@link #refresh()}来初始化Bean。
+ *
+ * 和其它ApplicationContext实现（每次refresh都创建一个BeanFactory）相反，
+ * 此context的内部BeanFactory从一开始就可以用来注册BeanDefinition（构造时即创建），
+ * {@link #refresh()}也只能调用一次。
  *
  * <p>Usage example:
  *
@@ -105,7 +115,7 @@ public class GenericApplicationContext extends AbstractApplicationContext implem
 
 
 	/**
-	 * Create a new GenericApplicationContext.
+	 * 构造时就创建BeanFactory
 	 * @see #registerBeanDefinition
 	 * @see #refresh
 	 */
@@ -259,13 +269,11 @@ public class GenericApplicationContext extends AbstractApplicationContext implem
 
 
 	//---------------------------------------------------------------------
-	// Implementations of AbstractApplicationContext's template methods
+	// AbstractApplicationContext 模板方法实现
 	//---------------------------------------------------------------------
 
 	/**
-	 * Do nothing: We hold a single internal BeanFactory and rely on callers
-	 * to register beans through our public methods (or the BeanFactory's).
-	 * @see #registerBeanDefinition
+	 * 什么也不做，因为已经有了一个BeanFactory，调用者可以通过公共方法进行创建Bean
 	 */
 	@Override
 	protected final void refreshBeanFactory() throws IllegalStateException {

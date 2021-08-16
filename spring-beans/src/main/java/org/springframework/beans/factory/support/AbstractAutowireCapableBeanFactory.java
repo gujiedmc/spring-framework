@@ -86,6 +86,23 @@ import org.springframework.util.ReflectionUtils.MethodCallback;
 import org.springframework.util.StringUtils;
 
 /**
+ * 摘要bean工厂超类实现默认bean创建，由指定的全部功能RootBeanDefinition类。 实现AutowireCapableBeanFactory除了AbstractBeanFactory界面createBean方法。
+ * 提供bean创建（与构造决议），物业人口，线路（包括自动连接），并初始化。 处理由类型的运行时bean引用，立志管理的集合，调用初始化方法等支持自动装配名构造，性能和特性。
+ * 由子类来实现主模板的方法是resolveDependency(DependencyDescriptor, String, Set, TypeConverter) ，用于通过自动装配类型。 在工厂，其能够搜索其bean定义的情况下，匹配豆通常将通过这样的搜索来实现。 对于其他工厂款式，简化匹配算法可被实现。
+ * 请注意，此类不承担或实现bean定义注册表功能。 见DefaultListableBeanFactory为的实现org.springframework.beans.factory.ListableBeanFactory和BeanDefinitionRegistry接口，它们分别代表这样的工厂的API和SPI视图
+ *
+ * 抽象工厂超类，实现了默认的bean创建。
+ * 实现了AutowireCapableBeanFactory除了{@link #createBean}以外的全部方法。
+ *
+ * 提供bean创建（通过构造解决），属性构造，自动装配，并初始化，
+ * 处理运行时bean的引用，处理器集合，调用初始化方法等等，
+ * 支持构造方法的自动注入，根据名称注入属性，根据type注入属性。
+ *
+ * 子类需要实现的主要模板方法是{@link #resolveDependency}，用来根据type注入。
+ * 假如一个BeanFactory能够搜索beanDefinition，则通常将通过此类搜索来实现匹配的bean。
+ *
+ * 注意这个类并没有实现BeanDefinition注册中心的功能。
+ *
  * Abstract bean factory superclass that implements default bean creation,
  * with the full capabilities specified by the {@link RootBeanDefinition} class.
  * Implements the {@link org.springframework.beans.factory.config.AutowireCapableBeanFactory}
@@ -124,13 +141,16 @@ import org.springframework.util.StringUtils;
 public abstract class AbstractAutowireCapableBeanFactory extends AbstractBeanFactory
 		implements AutowireCapableBeanFactory {
 
+	// 创建bean实例的策略
 	/** Strategy for creating bean instances. */
 	private InstantiationStrategy instantiationStrategy;
 
 	/** Resolver strategy for method parameter names. */
+	// 方法参数名称处理策略
 	@Nullable
 	private ParameterNameDiscoverer parameterNameDiscoverer = new DefaultParameterNameDiscoverer();
 
+	// 是否自动尝试处理Bean之间的循环依赖
 	/** Whether to automatically try to resolve circular references between beans. */
 	private boolean allowCircularReferences = true;
 
@@ -141,12 +161,14 @@ public abstract class AbstractAutowireCapableBeanFactory extends AbstractBeanFac
 	private boolean allowRawInjectionDespiteWrapping = false;
 
 	/**
+	 * 需要忽略依赖检查和自动注入的类型的集合
 	 * Dependency types to ignore on dependency check and autowire, as Set of
 	 * Class objects: for example, String. Default is none.
 	 */
 	private final Set<Class<?>> ignoredDependencyTypes = new HashSet<>();
 
 	/**
+	 * 需要忽略依赖检查和自动注入的接口的集合，默认只有BeanFactory接口被忽略
 	 * Dependency interfaces to ignore on dependency check and autowire, as Set of
 	 * Class objects. By default, only the BeanFactory interface is ignored.
 	 */
@@ -158,6 +180,7 @@ public abstract class AbstractAutowireCapableBeanFactory extends AbstractBeanFac
 	 */
 	private final NamedThreadLocal<String> currentlyCreatedBean = new NamedThreadLocal<>("Currently created bean");
 
+	// 未完成初始化的FactoryBean实例
 	/** Cache of unfinished FactoryBean instances: FactoryBean name to BeanWrapper. */
 	private final ConcurrentMap<String, BeanWrapper> factoryBeanInstanceCache = new ConcurrentHashMap<>();
 
@@ -302,6 +325,7 @@ public abstract class AbstractAutowireCapableBeanFactory extends AbstractBeanFac
 
 	//-------------------------------------------------------------------------
 	// Typical methods for creating and populating external bean instances
+	// 创建和构造外部bean实例的通用方法
 	//-------------------------------------------------------------------------
 
 	@Override
@@ -350,6 +374,7 @@ public abstract class AbstractAutowireCapableBeanFactory extends AbstractBeanFac
 
 	//-------------------------------------------------------------------------
 	// Specialized methods for fine-grained control over the bean lifecycle
+	// 专门的方法可以对bean的生命周期进行细粒度的控制
 	//-------------------------------------------------------------------------
 
 	@Override
@@ -452,6 +477,7 @@ public abstract class AbstractAutowireCapableBeanFactory extends AbstractBeanFac
 
 	//-------------------------------------------------------------------------
 	// Delegate methods for resolving injection points
+	// 解决注入点的委托方法
 	//-------------------------------------------------------------------------
 
 	@Override
@@ -474,9 +500,11 @@ public abstract class AbstractAutowireCapableBeanFactory extends AbstractBeanFac
 
 	//---------------------------------------------------------------------
 	// Implementation of relevant AbstractBeanFactory template methods
+	// 实现AbstractBeanFactory相关的模板方法
 	//---------------------------------------------------------------------
 
 	/**
+	 * 该类的核心方法。创建Bean实例
 	 * Central method of this class: creates a bean instance,
 	 * populates the bean instance, applies post-processors, etc.
 	 * @see #doCreateBean
@@ -499,7 +527,7 @@ public abstract class AbstractAutowireCapableBeanFactory extends AbstractBeanFac
 			mbdToUse.setBeanClass(resolvedClass);
 		}
 
-		// Prepare method overrides.
+		// 准备方法覆写
 		try {
 			mbdToUse.prepareMethodOverrides();
 		}
@@ -510,6 +538,7 @@ public abstract class AbstractAutowireCapableBeanFactory extends AbstractBeanFac
 
 		try {
 			// Give BeanPostProcessors a chance to return a proxy instead of the target bean instance.
+			// 给BeanPostProcessors一个机会返回代理类来替换原生实例
 			Object bean = resolveBeforeInstantiation(beanName, mbdToUse);
 			if (bean != null) {
 				return bean;
@@ -521,6 +550,7 @@ public abstract class AbstractAutowireCapableBeanFactory extends AbstractBeanFac
 		}
 
 		try {
+			// 执行创建bean
 			Object beanInstance = doCreateBean(beanName, mbdToUse, args);
 			if (logger.isTraceEnabled()) {
 				logger.trace("Finished creating instance of bean '" + beanName + "'");
@@ -539,6 +569,10 @@ public abstract class AbstractAutowireCapableBeanFactory extends AbstractBeanFac
 	}
 
 	/**
+	 * 真正创建bean的过，此时创建的预处理执行都已经执行过了
+	 *
+	 * 和默认bean的实例化过程的区别是使用工厂方法并且自动注入构造参数
+	 *
 	 * Actually create the specified bean. Pre-creation processing has already happened
 	 * at this point, e.g. checking {@code postProcessBeforeInstantiation} callbacks.
 	 * <p>Differentiates between default bean instantiation, use of a
@@ -555,7 +589,7 @@ public abstract class AbstractAutowireCapableBeanFactory extends AbstractBeanFac
 	protected Object doCreateBean(String beanName, RootBeanDefinition mbd, @Nullable Object[] args)
 			throws BeanCreationException {
 
-		// Instantiate the bean.
+		// 初始化
 		BeanWrapper instanceWrapper = null;
 		if (mbd.isSingleton()) {
 			instanceWrapper = this.factoryBeanInstanceCache.remove(beanName);
@@ -670,6 +704,8 @@ public abstract class AbstractAutowireCapableBeanFactory extends AbstractBeanFac
 	}
 
 	/**
+	 * 确定bean类型
+	 *
 	 * Determine the target type for the given bean definition.
 	 * @param beanName the name of the bean (for error handling purposes)
 	 * @param mbd the merged bean definition for the bean
@@ -1148,6 +1184,8 @@ public abstract class AbstractAutowireCapableBeanFactory extends AbstractBeanFac
 	}
 
 	/**
+	 * 为指定的bean创建一个新的实例，使用适当的初始化策略：工厂构造，构造注入或简单的初始化。
+	 *
 	 * Create a new instance for the specified bean, using an appropriate instantiation strategy:
 	 * factory method, constructor autowiring, or simple instantiation.
 	 * @param beanName the name of the bean
@@ -1161,6 +1199,7 @@ public abstract class AbstractAutowireCapableBeanFactory extends AbstractBeanFac
 	 */
 	protected BeanWrapper createBeanInstance(String beanName, RootBeanDefinition mbd, @Nullable Object[] args) {
 		// Make sure bean class is actually resolved at this point.
+		// 保证Bean的类已经加载
 		Class<?> beanClass = resolveBeanClass(mbd, beanName);
 
 		if (beanClass != null && !Modifier.isPublic(beanClass.getModifiers()) && !mbd.isNonPublicAccessAllowed()) {
@@ -1189,6 +1228,7 @@ public abstract class AbstractAutowireCapableBeanFactory extends AbstractBeanFac
 			}
 		}
 		if (resolved) {
+			// 需要自动注入
 			if (autowireNecessary) {
 				return autowireConstructor(beanName, mbd, null, null);
 			}
@@ -1291,6 +1331,8 @@ public abstract class AbstractAutowireCapableBeanFactory extends AbstractBeanFac
 	}
 
 	/**
+	 * 使用默认构造实例化bean
+	 *
 	 * Instantiate the given bean using its default constructor.
 	 * @param beanName the name of the bean
 	 * @param mbd the bean definition for the bean
@@ -1335,6 +1377,7 @@ public abstract class AbstractAutowireCapableBeanFactory extends AbstractBeanFac
 	}
 
 	/**
+	 * 通过自动注入构造参数实例化bean
 	 * "autowire constructor" (with constructor arguments by type) behavior.
 	 * Also applied if explicit constructor argument values are specified,
 	 * matching all remaining arguments with beans from the bean factory.

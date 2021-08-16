@@ -57,6 +57,17 @@ import org.springframework.util.function.SingletonSupplier;
 import org.springframework.util.function.SupplierUtils;
 
 /**
+ * Spring缓存的主要业务逻辑，为切面缓存提供支持。
+ *
+ * 子类需要以正确的顺序调用相关的方法。
+ *
+ * 使用策略模式。
+ * 使用{@link CacheOperationSource}来决定缓存操作。
+ * 使用{@link KeyGenerator}来生成缓存key。
+ * 使用{@link CacheResolver}来解析将要使用的缓存数据。
+ *
+ * 注意：缓存是可以序列化的，但是在反序列化之后不会再执行任何缓存？？没看懂
+ *
  * Base class for caching aspects, such as the {@link CacheInterceptor} or an
  * AspectJ aspect.
  *
@@ -370,6 +381,13 @@ public abstract class CacheAspectSupport extends AbstractCacheInvoker
 		return AopProxyUtils.ultimateTargetClass(target);
 	}
 
+	/**
+	 * 具体的AOP逻辑执行过程
+	 * @param invoker
+	 * @param method
+	 * @param contexts
+	 * @return
+	 */
 	@Nullable
 	private Object execute(final CacheOperationInvoker invoker, Method method, CacheOperationContexts contexts) {
 		// Special handling of synchronized invocation

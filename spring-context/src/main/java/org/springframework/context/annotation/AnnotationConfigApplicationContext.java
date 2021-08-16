@@ -34,6 +34,11 @@ import org.springframework.util.Assert;
  * {@link org.springframework.stereotype.Component @Component} types and JSR-330 compliant
  * classes using {@code javax.inject} annotations.
  *
+ * 单机ApplicationContext，基于注解驱动
+ * 可以通过{@link #register(Class...)}一个一个的注册Bean，也可以通过{@link #scan(String...)}扫描。
+ * 再有多个{@code @Configuration}时，后面定义的Bean会覆盖之前类中定义的。
+ * 可以通过特殊的方式故意覆盖部分bean。
+ *
  * <p>Allows for registering classes one by one using {@link #register(Class...)}
  * as well as for classpath scanning using {@link #scan(String...)}.
  *

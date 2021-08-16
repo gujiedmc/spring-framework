@@ -72,7 +72,7 @@ public class XmlWebApplicationContext extends AbstractRefreshableWebApplicationC
 
 
 	/**
-	 * Loads the bean definitions via an XmlBeanDefinitionReader.
+	 * 通过XmlBeanDefinitionReader加载Bean定义
 	 * @see org.springframework.beans.factory.xml.XmlBeanDefinitionReader
 	 * @see #initBeanDefinitionReader
 	 * @see #loadBeanDefinitions
