@@ -254,28 +254,38 @@ public class DataSourceTransactionManager extends AbstractPlatformTransactionMan
 		return (txObject.hasConnectionHolder() && txObject.getConnectionHolder().isTransactionActive());
 	}
 
+	/**
+	 * 真正开启事务的地方
+	 */
 	@Override
 	protected void doBegin(Object transaction, TransactionDefinition definition) {
 		DataSourceTransactionObject txObject = (DataSourceTransactionObject) transaction;
 		Connection con = null;
 
 		try {
+			// 如果新开启的事务没有连接或者当前事务所关联的连接已经有事务的时候创建新的连接
 			if (!txObject.hasConnectionHolder() ||
 					txObject.getConnectionHolder().isSynchronizedWithTransaction()) {
 				Connection newCon = obtainDataSource().getConnection();
 				if (logger.isDebugEnabled()) {
 					logger.debug("Acquired Connection [" + newCon + "] for JDBC transaction");
 				}
+				// 设置新开启的事务的新获取的连接，新连接
 				txObject.setConnectionHolder(new ConnectionHolder(newCon), true);
 			}
-
+			// 设置新开启事务所用的连接已关联事务
 			txObject.getConnectionHolder().setSynchronizedWithTransaction(true);
 			con = txObject.getConnectionHolder().getConnection();
-
+			// 给数据库连接配置隔离级别，是否只读
 			Integer previousIsolationLevel = DataSourceUtils.prepareConnectionForTransaction(con, definition);
 			txObject.setPreviousIsolationLevel(previousIsolationLevel);
 			txObject.setReadOnly(definition.isReadOnly());
 
+			// 如果需要的话切换到手动提交开启事务，对于一些JDBC驱动来说，这个命令的消耗是昂贵的，
+			// 因此在不必要的情况不需要设置（比如通过配置连接池已经关闭自动提交）
+			// 这里执行以后，已经开启事务
+			// 这里会调用当前所以用连接池DataSource去开启事务，比如Druid的DruidPooledConnection#setAutoCommit，
+			// Druid又会调用底层的MySQL驱动开启事务 com.mysql.cj.jdbc.ConnectionImpl#setAutoCommit
 			// Switch to manual commit if necessary. This is very expensive in some JDBC drivers,
 			// so we don't want to do it unnecessarily (for example if we've explicitly
 			// configured the connection pool to set it already).
@@ -286,8 +296,9 @@ public class DataSourceTransactionManager extends AbstractPlatformTransactionMan
 				}
 				con.setAutoCommit(false);
 			}
-
+			// 视情况执行连接只读指令
 			prepareTransactionalConnection(con, definition);
+			// 标记当前数据库连接已经开启事务
 			txObject.getConnectionHolder().setTransactionActive(true);
 
 			int timeout = determineTimeout(definition);
@@ -295,6 +306,7 @@ public class DataSourceTransactionManager extends AbstractPlatformTransactionMan
 				txObject.getConnectionHolder().setTimeoutInSeconds(timeout);
 			}
 
+			// 如果当前连接是新创建的，将连接Holder绑定到线程上
 			// Bind the connection holder to the thread.
 			if (txObject.isNewConnectionHolder()) {
 				TransactionSynchronizationManager.bindResource(obtainDataSource(), txObject.getConnectionHolder());
@@ -302,6 +314,8 @@ public class DataSourceTransactionManager extends AbstractPlatformTransactionMan
 		}
 
 		catch (Throwable ex) {
+			// 异常处理
+			// 如果创建了新连接，释放连接
 			if (txObject.isNewConnectionHolder()) {
 				DataSourceUtils.releaseConnection(con, obtainDataSource());
 				txObject.setConnectionHolder(null, false);
@@ -322,6 +336,9 @@ public class DataSourceTransactionManager extends AbstractPlatformTransactionMan
 		TransactionSynchronizationManager.bindResource(obtainDataSource(), suspendedResources);
 	}
 
+	/**
+	 * 通过底层连接执行事务提交
+	 */
 	@Override
 	protected void doCommit(DefaultTransactionStatus status) {
 		DataSourceTransactionObject txObject = (DataSourceTransactionObject) status.getTransaction();
@@ -362,15 +379,20 @@ public class DataSourceTransactionManager extends AbstractPlatformTransactionMan
 		txObject.setRollbackOnly();
 	}
 
+	/**
+	 * 在commit或者rollback之后清理数据
+	 */
 	@Override
 	protected void doCleanupAfterCompletion(Object transaction) {
 		DataSourceTransactionObject txObject = (DataSourceTransactionObject) transaction;
 
+		// newTransaction事务解绑数据源
 		// Remove the connection holder from the thread, if exposed.
 		if (txObject.isNewConnectionHolder()) {
 			TransactionSynchronizationManager.unbindResource(obtainDataSource());
 		}
 
+		// 重置事务标记
 		// Reset connection.
 		Connection con = txObject.getConnectionHolder().getConnection();
 		try {
@@ -390,12 +412,15 @@ public class DataSourceTransactionManager extends AbstractPlatformTransactionMan
 			}
 			DataSourceUtils.releaseConnection(con, this.dataSource);
 		}
-
+		// 清理connection holder
 		txObject.getConnectionHolder().clear();
 	}
 
 
 	/**
+	 * 在数据库连接开启事务之后，立马处理一下连接。
+	 * 这里主要是看连接是否是只读，设置事务只读。
+	 *
 	 * Prepare the transactional {@code Connection} right after transaction begin.
 	 * <p>The default implementation executes a "SET TRANSACTION READ ONLY" statement
 	 * if the {@link #setEnforceReadOnly "enforceReadOnly"} flag is set to {@code true}

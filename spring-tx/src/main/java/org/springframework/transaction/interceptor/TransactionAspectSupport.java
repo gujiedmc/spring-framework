@@ -56,6 +56,10 @@ import org.springframework.util.ConcurrentReferenceHashMap;
 import org.springframework.util.StringUtils;
 
 /**
+ * Spring事务切面处理的基类。
+ *
+ *
+ *
  * Base class for transactional aspects, such as the {@link TransactionInterceptor}
  * or an AspectJ aspect.
  *
@@ -67,6 +71,8 @@ import org.springframework.util.StringUtils;
  * <p>If no transaction name has been specified in the {@link TransactionAttribute},
  * the exposed name will be the {@code fully-qualified class name + "." + method name}
  * (by default).
+ *
+ * 通过使用策略模式选择合适的TransactionManager。
  *
  * <p>Uses the <b>Strategy</b> design pattern. A {@link PlatformTransactionManager} or
  * {@link ReactiveTransactionManager} implementation will perform the actual transaction
@@ -322,15 +328,17 @@ public abstract class TransactionAspectSupport implements BeanFactoryAware, Init
 
 
 	/**
-	 * 事务切面执行逻辑
+	 * 事务切面执行逻辑。基于环绕切面的模板方法，具体执行委托到这个类里面的另外几个方法。
+	 *
+	 * invocation.proceedWithInvocation()事务目标方法执行，执行之前会判断是否开启事务，执行之后会判断是提交还是回滚
 	 *
 	 * General delegate for around-advice-based subclasses, delegating to several other template
 	 * methods on this class. Able to handle {@link CallbackPreferringPlatformTransactionManager}
 	 * as well as regular {@link PlatformTransactionManager} implementations and
 	 * {@link ReactiveTransactionManager} implementations for reactive return types.
-	 * @param method the Method being invoked
-	 * @param targetClass the target class that we're invoking the method on
-	 * @param invocation the callback to use for proceeding with the target invocation
+	 * @param method the Method being invoked 事目标方法
+	 * @param targetClass the target class that we're invoking the method on 目标方法所在的类
+	 * @param invocation the callback to use for proceeding with the target invocation 执行回调用来执行目标方法
 	 * @return the return value of the method, if any
 	 * @throws Throwable propagated from the target invocation
 	 */
@@ -338,11 +346,15 @@ public abstract class TransactionAspectSupport implements BeanFactoryAware, Init
 	protected Object invokeWithinTransaction(Method method, @Nullable Class<?> targetClass,
 			final InvocationCallback invocation) throws Throwable {
 
+		// 如果没有事务属性，说明这个方法不需要事务
 		// If the transaction attribute is null, the method is non-transactional.
 		TransactionAttributeSource tas = getTransactionAttributeSource();
+		// 主要是事务的一些属性，比如传播级别，隔离级别，回滚异常，超时等等注解上可配置的树形
 		final TransactionAttribute txAttr = (tas != null ? tas.getTransactionAttribute(method, targetClass) : null);
+		// 事务管理器
 		final TransactionManager tm = determineTransactionManager(txAttr);
 
+		// ReactiveTransactionManager
 		if (this.reactiveAdapterRegistry != null && tm instanceof ReactiveTransactionManager) {
 			boolean isSuspendingFunction = KotlinDetector.isSuspendingFunction(method);
 			boolean hasSuspendingFlowReturnType = isSuspendingFunction &&
@@ -376,7 +388,9 @@ public abstract class TransactionAspectSupport implements BeanFactoryAware, Init
 			return result;
 		}
 
+		// 非 CallbackPreferringPlatformTransactionManager，也就是一般正常情况下
 		PlatformTransactionManager ptm = asPlatformTransactionManager(tm);
+		// 目标方法
 		final String joinpointIdentification = methodIdentification(method, targetClass, txAttr);
 
 		if (txAttr == null || !(ptm instanceof CallbackPreferringPlatformTransactionManager)) {
@@ -384,6 +398,7 @@ public abstract class TransactionAspectSupport implements BeanFactoryAware, Init
 			// Standard transaction demarcation with getTransaction and commit/rollback calls.
 			TransactionInfo txInfo = createTransactionIfNecessary(ptm, txAttr, joinpointIdentification);
 
+			// 目标方法返回结果
 			Object retVal;
 			try {
 				// 切面，用户业务逻辑
@@ -398,7 +413,7 @@ public abstract class TransactionAspectSupport implements BeanFactoryAware, Init
 				throw ex;
 			}
 			finally {
-
+				// 从线程变量中清理 TransactionInfo
 				cleanupTransactionInfo(txInfo);
 			}
 
@@ -413,7 +428,7 @@ public abstract class TransactionAspectSupport implements BeanFactoryAware, Init
 			commitTransactionAfterReturning(txInfo);
 			return retVal;
 		}
-
+		// CallbackPreferringPlatformTransactionManager
 		else {
 			Object result;
 			final ThrowableHolder throwableHolder = new ThrowableHolder();
@@ -587,6 +602,7 @@ public abstract class TransactionAspectSupport implements BeanFactoryAware, Init
 	protected TransactionInfo createTransactionIfNecessary(@Nullable PlatformTransactionManager tm,
 			@Nullable TransactionAttribute txAttr, final String joinpointIdentification) {
 
+		// 判断用户是否手动指定事务name，否则使用目标方法名称
 		// If no name specified, apply method identification as transaction name.
 		if (txAttr != null && txAttr.getName() == null) {
 			txAttr = new DelegatingTransactionAttribute(txAttr) {
@@ -614,6 +630,8 @@ public abstract class TransactionAspectSupport implements BeanFactoryAware, Init
 	}
 
 	/**
+	 * 根据给定的事务属性和事务状态创建一个 TransactionInfo，并绑定到线程变量中
+	 *
 	 * Prepare a TransactionInfo for the given attribute and status object.
 	 * @param txAttr the TransactionAttribute (may be {@code null})
 	 * @param joinpointIdentification the fully qualified method name
@@ -651,6 +669,8 @@ public abstract class TransactionAspectSupport implements BeanFactoryAware, Init
 	}
 
 	/**
+	 * 成功执行所有操作之后提交事务
+	 *
 	 * Execute after successful completion of call, but not after an exception was handled.
 	 * Do nothing if we didn't create a transaction.
 	 * @param txInfo information about the current transaction
@@ -665,6 +685,8 @@ public abstract class TransactionAspectSupport implements BeanFactoryAware, Init
 	}
 
 	/**
+	 * 在发生异常是结束事务，可能提交，也可能回滚。
+	 * 主要是根据配置的需要回滚的异常以及不需要回滚的异常和当前异常进行比较。
 	 * Handle a throwable, completing the transaction.
 	 * We may commit or roll back, depending on the configuration.
 	 * @param txInfo information about the current transaction

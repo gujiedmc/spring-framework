@@ -22,6 +22,8 @@ import org.springframework.transaction.SavepointManager;
 import org.springframework.util.Assert;
 
 /**
+ * 默认的事务状态。
+ *
  * Default implementation of the {@link org.springframework.transaction.TransactionStatus}
  * interface, used by {@link AbstractPlatformTransactionManager}. Based on the concept
  * of an underlying "transaction object".
@@ -50,9 +52,16 @@ import org.springframework.util.Assert;
  */
 public class DefaultTransactionStatus extends AbstractTransactionStatus {
 
+	/**
+	 * 底层事务信息
+	 */
 	@Nullable
 	private final Object transaction;
 
+	/**
+	 * 是否有真正开启数据库事务。
+	 * 如果复用外层事务则为false。
+	 */
 	private final boolean newTransaction;
 
 	private final boolean newSynchronization;

@@ -46,6 +46,11 @@ import org.springframework.lang.Nullable;
 public interface PlatformTransactionManager extends TransactionManager {
 
 	/**
+	 *
+	 * 根据事务传播类型，返回一个当前已有事务或者新建的事务。
+	 *
+	 * 隔离级别或者超时时间之类的参数会应用在新建的事务上，如果事务复用则会被忽略
+	 *
 	 * Return a currently active transaction or create a new one, according to
 	 * the specified propagation behavior.
 	 * <p>Note that parameters like isolation level or timeout will only be applied
@@ -72,6 +77,17 @@ public interface PlatformTransactionManager extends TransactionManager {
 			throws TransactionException;
 
 	/**
+	 * 提交事务，但是如果事务被标记会只回滚，任然会进行回滚
+	 *
+	 * 如果当前事务不是newTransaction的事务，会在一些事务传播级别中省略提交过程
+	 * 如果外层的事务被挂起了，需要在完成提交事务之后恢复外层的时候。
+	 *
+	 * 当提交事务执行结束后，无论正常还是报错，事务都已经被清理干净，不需要在执行回滚逻辑。
+	 *
+	 * 如果这个方法抛出了非TransactionException的异常，
+	 * 说明一些异常在执行commit逻辑之前发生，导致commit未能执行。（例如O/R映射工具会尝试将）
+	 * 此时原始异常会被直接抛出
+	 *
 	 * Commit the given transaction, with regard to its status. If the transaction
 	 * has been marked rollback-only programmatically, perform a rollback.
 	 * <p>If the transaction wasn't a new one, omit the commit for proper
@@ -101,6 +117,15 @@ public interface PlatformTransactionManager extends TransactionManager {
 	void commit(TransactionStatus status) throws TransactionException;
 
 	/**
+	 *
+	 * 回滚事务。
+	 *
+	 * 如果当前事务不是新开启的事务，在一些传播级别的时候直接设置外层事务为只rollback。
+	 * 如果外层事务被挂起，在回滚掉当前事务后，需要恢复外层事务
+	 *
+	 * 不要在commit方法抛出异常的时候调用rollback方法，
+	 * 因为就算在commit出现异常的情况下，commit方法也会将事务清理干净。
+	 *
 	 * Perform a rollback of the given transaction.
 	 * <p>If the transaction wasn't a new one, just set it rollback-only for proper
 	 * participation in the surrounding transaction. If a previous transaction

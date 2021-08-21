@@ -163,6 +163,8 @@ public abstract class DataSourceUtils {
 	}
 
 	/**
+	 * 通过给定的事务定义配置指定的数据库连接，主要是readOnly，事务隔离级别
+	 *
 	 * Prepare the given Connection with the given transaction semantics.
 	 * @param con the Connection to prepare
 	 * @param definition the transaction definition to apply
