@@ -54,6 +54,8 @@ import org.springframework.util.Assert;
 import org.springframework.util.StringUtils;
 
 /**
+ * JTA事务管理器
+ *
  * {@link org.springframework.transaction.PlatformTransactionManager} implementation
  * for JTA, delegating to a backend JTA provider. This is typically used to delegate
  * to a Java EE server's transaction coordinator, but may also be configured with a
@@ -205,9 +207,11 @@ public class JtaTransactionManager extends AbstractPlatformTransactionManager
 	}
 
 	/**
+	 * 创建一个JTA事务管理器。
+	 *
 	 * Create a new JtaTransactionManager instance.
-	 * @param userTransaction the JTA UserTransaction to use as direct reference
-	 * @param transactionManager the JTA TransactionManager to use as direct reference
+	 * @param userTransaction the JTA UserTransaction to use as direct reference 用户使用的JTA事务
+	 * @param transactionManager the JTA TransactionManager to use as direct reference 内部维护的事务管理器
 	 */
 	public JtaTransactionManager(UserTransaction userTransaction, TransactionManager transactionManager) {
 		this();
@@ -883,6 +887,7 @@ public class JtaTransactionManager extends AbstractPlatformTransactionManager
 		applyIsolationLevel(txObject, definition.getIsolationLevel());
 		int timeout = determineTimeout(definition);
 		applyTimeout(txObject, timeout);
+		// 获取事务Object 执行begin
 		txObject.getUserTransaction().begin();
 	}
 
